@@ -1,0 +1,12 @@
+[workspace]
+members = ["wasm", "dev_server"]
+default-members = ["dev_server"]
+
+[profile.dev]
+# optimize for size even on dev to prevent excessive locals
+opt-level = "z"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+# opt-level = "s"
+opt-level = "z"

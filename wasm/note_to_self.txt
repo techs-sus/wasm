@@ -1,0 +1,5 @@
+dev:
+RUSTFLAGS="--remap-path-prefix $HOME=~" cargo build --target wasm32-unknown-unknown && wasm2luau ../target/wasm32-unknown-unknown/debug/lua_sb.wasm > ./roblox/wasm.luau
+release:
+RUSTFLAGS="--remap-path-prefix $HOME=~" cargo build --target wasm32-unknown-unknown --release && wasm2luau ../target/wasm32-unknown-unknown/release/lua_sb.wasm > ./roblox/wasm.luau
+

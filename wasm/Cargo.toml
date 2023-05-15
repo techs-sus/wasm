@@ -1,0 +1,12 @@
+[package]
+name = "lua_sb"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wee_alloc = { version = "0.4.5" }
+roblox_rs = { git = "https://github.com/roblox-rs/bindings", features = [
+	"multivalue",
+] }
