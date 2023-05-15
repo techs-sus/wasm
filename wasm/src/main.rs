@@ -7,5 +7,6 @@ use roblox_rs::{println, *};
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 pub fn main() {
+	let instance = DataModel::instance();
 	println!("Hello from wasm!!!");
 }

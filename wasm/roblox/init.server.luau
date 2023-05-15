@@ -45,6 +45,7 @@ local env = {
 	-- Instances
 
 	get_game = function()
+		print("-> wasm tried to get game")
 		return createPointer(game)
 	end,
 
