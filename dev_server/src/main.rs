@@ -1,43 +1,55 @@
+use std::{path::Path, sync::Arc, time::Duration};
+
 use anyhow::Context;
+use futures::{
+	channel::mpsc::{channel, Receiver},
+	lock::Mutex,
+	SinkExt, StreamExt,
+};
 use localtunnel_client::{broadcast, open_tunnel, ClientConfig};
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use rocket::State;
-use uuid::Uuid;
+// use uuid::Uuid;
 
 #[macro_use]
 extern crate rocket;
 
 #[get("/wasm_src/<id>")]
-fn wasm_src(id: i32) -> String {
+async fn wasm_src(state: &State<Data>, id: i32) -> String {
+	state.rx.lock().await.next().await.unwrap();
+	// beautiful polling :wow:
 	std::fs::read_to_string("wasm/roblox/wasm.luau")
 		.context("Failed reading file")
 		.unwrap()
 }
 
-#[get("/dev")]
-fn index(state: &State<String>) -> String {
-	format!(
-		"
-	local gui = Instance.new('ScreenGui');
-	gui.DisplayOrder = 10000000000;
-	local button = Instance.new('TextButton')
-	button.Size = UDim2.fromScale(0.1, 0.1);
-	button.Position = UDim2.fromScale(0.5, 0.5)
-	button.Text = \"Reload\"
-	button.Parent = gui
-	local http = game:GetService('HttpService')
-	local init = loadstring(http:GetAsync('https://raw.githubusercontent.com/techs-sus/wasm/master/wasm/roblox/init.server.luau'))
-	button.MouseButton1Down:Connect(function()
-		print('Reloading')
-		WASM_SRC = http:RequestAsync({{
-			Url = '{state}/wasm_src/' .. math.random(1, 10000000),
-			Method = 'GET'
-		}}).Body
-		init()
-	end)
-	gui.Parent = owner.PlayerGui
+#[derive(Debug)]
+struct Data {
+	pub uri: String,
+	pub rx: Arc<Mutex<Receiver<notify::Result<Event>>>>,
+}
 
-	"
-	)
+#[get("/dev")]
+fn index(data: &State<Data>) -> Option<String> {
+	let src = std::fs::read_to_string("./dev_server/dev.lua").ok()?;
+	Some(src.replace("__URL__", &data.uri))
+}
+
+fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Result<Event>>)> {
+	let (mut tx, rx) = channel(1);
+
+	// Automatically select the best implementation for your platform.
+	// You can also access each implementation directly e	.g. INotifyWatcher.
+	let watcher = RecommendedWatcher::new(
+		move |res| {
+			futures::executor::block_on(async {
+				tx.send(res).await.unwrap();
+			})
+		},
+		Config::default(),
+	)?;
+
+	Ok((watcher, rx))
 }
 
 #[rocket::main]
@@ -61,9 +73,19 @@ async fn main() {
 		let result = open_tunnel(config).await.unwrap();
 		println!("result: {result}");
 	});
+
+	// setup wasm watcher
+	let (mut watcher, rx) = async_watcher().unwrap();
+	watcher
+		.watch(Path::new("wasm/src"), RecursiveMode::NonRecursive)
+		.unwrap();
+	let data = Data {
+		uri: format!("https://{}.loca.lt", subdomain),
+		rx: Arc::new(Mutex::new(rx)),
+	};
 	let _ = rocket::build()
 		.mount("/", routes![index, wasm_src])
-		.manage(format!("https://{}.loca.lt", subdomain))
+		.manage(data)
 		.launch()
 		.await;
 	let _ = notify_shutdown.send(());

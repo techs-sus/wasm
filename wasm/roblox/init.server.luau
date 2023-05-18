@@ -45,13 +45,13 @@ local env = {
 	-- Instances
 
 	get_game = function()
-		print("-> wasm tried to get game")
+		print("> wasm tried to get game")
 		return createPointer(game)
 	end,
 
 	-- testing/logging
 	print = function(addr, len)
-		task.defer(print, readString(addr, len))
+		print(readString(addr, len))
 	end,
 	error = function(addr, len)
 		error(readString(addr, len))
@@ -64,10 +64,6 @@ for i, v in pairs(abi.ffi) do
 	env[i] = v
 end
 
--- the wasm is massive
-if WASM_SRC then
-	print("Using global wasm src")
-end
 local WASM_SRC = WASM_SRC or http:GetAsync("https://raw.githubusercontent.com/techs-sus/wasm/master/wasm/roblox/wasm.luau")
 local __wasm = loadstring(WASM_SRC)()
 wasm = __wasm({
@@ -87,4 +83,3 @@ createPointer, getPointer, dropPointer, invokeOnce, readString =
 local start = os.clock()
 wasm.func_list.hook()
 wasm.func_list.main()
-print("Wasm took " .. (os.clock() - start) * 1000 .. " ms to execute")
