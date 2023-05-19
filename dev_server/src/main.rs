@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{path::Path, process::Command, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use futures::{
@@ -16,7 +16,10 @@ extern crate rocket;
 
 #[get("/wasm_src/<id>")]
 async fn wasm_src(state: &State<Data>, id: i32) -> String {
-	state.rx.lock().await.next().await.unwrap();
+	while let None = state.rx.lock().await.next().await {
+		// woo..
+		tokio::time::sleep(Duration::from_millis(500)).await;
+	}
 	// beautiful polling :wow:
 	std::fs::read_to_string("wasm/roblox/wasm.luau")
 		.context("Failed reading file")
@@ -43,6 +46,23 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
 	let watcher = RecommendedWatcher::new(
 		move |res| {
 			futures::executor::block_on(async {
+				// pls pls pls
+				Command::new("cargo")
+					.args(["build", "--target", "wasm32-unknown-unknown"])
+					.env("RUSTFLAGS", "--remap-path-prefix $HOME=~")
+					.current_dir(std::fs::canonicalize("./wasm").unwrap())
+					.spawn()
+					.unwrap()
+					.try_wait()
+					.ok();
+				// wasm2luau ../target/wasm32-unknown-unknown/debug/lua_sb.wasm > ./roblox/wasm.luau
+				let output = Command::new("wasm2luau")
+					.args(["./target/wasm32-unknown-unknown/debug/lua_sb.wasm"])
+					.env("RUSTFLAGS", "--remap-path-prefix $HOME=~")
+					.current_dir(std::fs::canonicalize("./wasm").unwrap())
+					.output()
+					.unwrap();
+				std::fs::write("wasm/roblox/wasm.luau", output.stdout).unwrap();
 				tx.send(res).await.unwrap();
 			})
 		},
@@ -89,4 +109,5 @@ async fn main() {
 		.launch()
 		.await;
 	let _ = notify_shutdown.send(());
+	watcher.unwatch(Path::new("wasm/src")).unwrap();
 }

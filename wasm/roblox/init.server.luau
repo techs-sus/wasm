@@ -51,7 +51,7 @@ local env = {
 
 	-- testing/logging
 	print = function(addr, len)
-		print(readString(addr, len))
+		task.defer(print, readString(addr, len))
 	end,
 	error = function(addr, len)
 		error(readString(addr, len))
@@ -80,6 +80,5 @@ abi.load(wasm, rt, util)
 createPointer, getPointer, dropPointer, invokeOnce, readString =
 	util.createPointer, util.getPointer, util.dropPointer, util.invokeOnce, util.readString
 
-local start = os.clock()
 wasm.func_list.hook()
 wasm.func_list.main()

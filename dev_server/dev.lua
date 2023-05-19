@@ -5,14 +5,15 @@ local init =
 
 local function run()
 	WASM_SRC = http:RequestAsync( {
-		Url = "__URL__/wasm_src/" .. math.random(1, 10000000),
+		Url = "__URL__/wasm_src/" .. math.random(1, 100000000),
 		Method = "GET",
 	} ).Body
 	print("> wasm changed, rerun.")
-	local e,x = pcall(function()
+	-- local e,x = pcall(function()
 		init()
-	end)
-	if e then print("> error: " .. e) end
+	-- end)
+	-- if e then print("> error: " .. x) end
+	task.wait(1)
 end
 
 while task.wait() do
