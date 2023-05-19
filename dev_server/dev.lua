@@ -1,6 +1,6 @@
 local http = game:GetService("HttpService")
 local init =
-	loadstring(http:GetAsync("https://raw.githubusercontent.com/techs-sus/wasm/master/wasm/roblox/init.server.luau"))
+	loadstring(http:GetAsync("__URL__/init_src/" .. math.random(1, 10000000)))
 -- polling
 
 local function run()
@@ -9,14 +9,13 @@ local function run()
 		Method = "GET",
 	} ).Body
 	print("> wasm changed, rerun.")
-	-- local e,x = pcall(function()
+	local e,x = pcall(function()
 		init()
-	-- end)
-	-- if e then print("> error: " .. x) end
-	task.wait(1)
+	end)
+	if not e then print("> error: " .. x) end
 end
 
-while task.wait() do
+while task.wait(1) do
 	run()
 end
 

@@ -59,7 +59,7 @@ local env = {
 }
 
 -- the abi is massive
-local abi = loadstring(http:GetAsync("https://raw.githubusercontent.com/roblox-rs/bindings/master/roblox/abi.luau"))()
+local abi = loadstring(http:GetAsync("https://raw.githubusercontent.com/techs-sus/wasm/master/wasm/roblox/abi.luau"))()
 for i, v in pairs(abi.ffi) do
 	env[i] = v
 end

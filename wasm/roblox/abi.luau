@@ -10571,8 +10571,7 @@ function abi.ffi.method_service_provider_find_service(self, class_name_addr, cla
 	return result_0_optional, result_0_optional_0;
 end
 function abi.ffi.method_service_provider_get_service(self, class_name_addr, class_name_len)
-print("YO")
-	local result_0 = game:GetService(loadString(memory, class_name_addr, class_name_len));
+	local result_0 = getPointer(self):GetService(loadString(memory, class_name_addr, class_name_len));
 	local result_0_optional, result_0_optional_0 = 0, 0;
 	if (result_0 ~= nil) then
 		result_0_optional, result_0_optional_0 = 1, createPointer(result_0);

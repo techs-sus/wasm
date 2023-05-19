@@ -1,4 +1,9 @@
-use std::{path::Path, process::Command, sync::Arc, time::Duration};
+use std::{
+	path::Path,
+	process::Command,
+	sync::Arc,
+	time::{Duration, Instant},
+};
 
 use anyhow::Context;
 use futures::{
@@ -8,11 +13,16 @@ use futures::{
 };
 use localtunnel_client::{broadcast, open_tunnel, ClientConfig};
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-use rocket::State;
+use rocket::{time::UtcOffset, State};
 // use uuid::Uuid;
 
 #[macro_use]
 extern crate rocket;
+
+#[get("/init_src/<id>")]
+fn init_src(id: i32) -> String {
+	std::fs::read_to_string("wasm/roblox/init.server.luau").unwrap()
+}
 
 #[get("/wasm_src/<id>")]
 async fn wasm_src(state: &State<Data>, id: i32) -> String {
@@ -103,7 +113,7 @@ async fn main() {
 		rx: Arc::new(Mutex::new(rx)),
 	};
 	let _ = rocket::build()
-		.mount("/", routes![index, wasm_src])
+		.mount("/", routes![index, wasm_src, init_src])
 		.manage(data)
 		.launch()
 		.await;
