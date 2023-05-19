@@ -57,8 +57,7 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
 					.ok();
 				// wasm2luau ../target/wasm32-unknown-unknown/debug/lua_sb.wasm > ./roblox/wasm.luau
 				let output = Command::new("wasm2luau")
-					.args(["./target/wasm32-unknown-unknown/debug/lua_sb.wasm"])
-					.env("RUSTFLAGS", "--remap-path-prefix $HOME=~")
+					.args(["../target/wasm32-unknown-unknown/debug/lua_sb.wasm"])
 					.current_dir(std::fs::canonicalize("./wasm").unwrap())
 					.output()
 					.unwrap();
